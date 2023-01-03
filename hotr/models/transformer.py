@@ -94,30 +94,31 @@ class TransformerEncoder(nn.Module):
         output = src # features lấy ra được từ DETR
 
         if semantic_features is not None and src_key_padding_semantic_mask is not None:
-          max_tokens = output.shape[0]
-          semantic_features = semantic_features[:max_tokens, :, :]
-          src_key_padding_semantic_mask = src_key_padding_semantic_mask[:, :max_tokens]
-          caption_features = caption_features[:max_tokens, :, :]
-          caption_masks = caption_masks[:, :max_tokens]
-          outputs = []
-          for i, layer in enumerate(self.layers):
-              if i < self.Lf:
-                  output = layer(output, src_mask=mask, src_key_padding_mask=src_key_padding_mask, pos=pos)
-                  output1 = layer(semantic_features, src_key_padding_mask=src_key_padding_semantic_mask, pos=pos)
-              elif i == self.Lf:
-                  x1 = output
-                  x2 = output1
-                  output = output + output1
-                  output = layer(output, src_mask=mask, src_key_padding_mask=src_key_padding_mask, pos=pos)
-              else:
-                  output = layer(output, src_mask=mask, src_key_padding_mask=src_key_padding_mask, pos=pos)
-              if self.norm is not None:
-                  output = self.norm(output)
+            max_tokens = output.shape[0]
+            semantic_features = semantic_features[:max_tokens, :, :]
+            src_key_padding_semantic_mask = src_key_padding_semantic_mask[:, :max_tokens]
+            caption_features = caption_features[:max_tokens, :, :]
+            caption_masks = caption_masks[:, :max_tokens]
 
-          relation_caption_output = self.captionlayer(caption_features, output, output, src_key_padding_mask=caption_masks, pos=pos)
-          output = output + x1 + x2 + relation_caption_output
-          
-          return output
+            for i, layer in enumerate(self.layers):
+                    if i < self.Lf:
+                        output = layer(output, src_mask=mask, src_key_padding_mask=src_key_padding_mask, pos=pos)
+                        output1 = layer(semantic_features, src_key_padding_mask=src_key_padding_semantic_mask, pos=pos)
+                    elif i == self.Lf:
+                        x1 = output
+                        x2 = output1
+                        output = output + output1
+                        output = layer(output, src_mask=mask, src_key_padding_mask=src_key_padding_mask, pos=pos)
+                    else:
+                        output = layer(output, src_mask=mask, src_key_padding_mask=src_key_padding_mask, pos=pos)
+                    if self.norm is not None:
+                        output = self.norm(output)
+
+            import pdb; pdb.set_trace()
+            relation_caption_output = self.captionlayer(caption_features, output, output, src_key_padding_mask=caption_masks, pos=pos)
+            output = output + x1 + x2 + relation_caption_output
+            
+            return output
         
         else:
           for layer in self.layers:
