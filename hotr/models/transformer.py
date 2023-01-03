@@ -151,12 +151,19 @@ class TransformerDecoder(nn.Module):
 
         intermediate = []
         
-        for layer in self.layers:
-            output = layer(output, memory, tgt_mask=tgt_mask,
-                           memory_mask=memory_mask,
-                           tgt_key_padding_mask=tgt_key_padding_mask,
-                           memory_key_padding_mask=memory_key_padding_mask,
-                           pos=pos, query_pos=query_pos, caption_features=caption_features)
+        for idx, layer in enumerate(self.layers):
+            if idx == self.num_layers - 1: # Adaptive Attention only at the last decoder layer
+                output = layer(output, memory, tgt_mask=tgt_mask,
+                            memory_mask=memory_mask,
+                            tgt_key_padding_mask=tgt_key_padding_mask,
+                            memory_key_padding_mask=memory_key_padding_mask,
+                            pos=pos, query_pos=query_pos, caption_features=caption_features)
+            else:
+                output = layer(output, memory, tgt_mask=tgt_mask,
+                            memory_mask=memory_mask,
+                            tgt_key_padding_mask=tgt_key_padding_mask,
+                            memory_key_padding_mask=memory_key_padding_mask,
+                            pos=pos, query_pos=query_pos)
             
             if self.return_intermediate:
                 intermediate.append(self.norm(output))
@@ -412,12 +419,11 @@ class TransformerDecoderLayer(nn.Module):
                      query_pos: Optional[Tensor] = None,
                      caption_features: Optional[Tensor] = None):
 
-        if caption_features is not None:
-            import pdb; pdb.set_trace();
         q = k = self.with_pos_embed(tgt, query_pos)
         
         tgt2 = self.self_attn(q, k, value=tgt, attn_mask=tgt_mask,
                               key_padding_mask=tgt_key_padding_mask)[0]
+        
         tgt = tgt + self.dropout1(tgt2)
         tgt = self.norm1(tgt)
 

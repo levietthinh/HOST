@@ -235,7 +235,8 @@ def _scaled_dot_product_attention(
     else:
         attn = torch.bmm(q, k.transpose(-2, -1))
 
-    # if relative_geometry_weights is not None:
+    if relative_geometry_weights is not None:
+        import pdb; pdb.set_trace()
     #   w_g = relative_geometry_weights
     #   w_g = F.interpolate(w_g, size=(attn.size(-1), attn.size(-2)), mode='bilinear')
     #   w_g = w_g.reshape(B, *w_g.size()[-2:])
