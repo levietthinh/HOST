@@ -104,7 +104,6 @@ class TransformerEncoder(nn.Module):
               if i < self.Lf:
                   output = layer(output, src_mask=mask, src_key_padding_mask=src_key_padding_mask, pos=pos)
                   output1 = layer(semantic_features, src_key_padding_mask=src_key_padding_semantic_mask, pos=pos)
-                  # output2 = layer(caption_features, src_key_padding_mask=caption_masks, pos=pos)
               elif i == self.Lf:
                   x1 = output
                   x2 = output1
@@ -151,7 +150,8 @@ class TransformerDecoder(nn.Module):
         output = tgt
 
         intermediate = []
-
+        
+        import pdb; pdb.set_trace()
         for layer in self.layers:
             output = layer(output, memory, tgt_mask=tgt_mask,
                            memory_mask=memory_mask,
