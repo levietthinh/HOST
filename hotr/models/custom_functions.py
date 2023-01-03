@@ -242,27 +242,39 @@ def _scaled_dot_product_attention(
     if relative_geometry_weights is not None:
         caption_features = relative_geometry_weights
         num_tokens, bs, dims = caption_features.shape
-        caption_features = caption_features.view(num_tokens, bs, 8, dims // 8) # (Nt, bs, nh, dim)
+        caption_features = caption_features.view(num_tokens, bs, 8, dims // 8) # (Nq, bs, nh, dim)
         caption_features = caption_features.permute(1, 2, 0, -1)
-        caption_features = caption_features.reshape(-1, num_tokens, dims // 8)
+        caption_features = caption_features.reshape(-1, num_tokens, dims // 8) # (bs*nh, nq, dim) == values.shape
 
-        import pdb; pdb.set_trace()
+        cut_caption_features = caption_features[:, :Nt, :]
+        captions_att = torch.matmul(queries, cut_caption_features.permute(0, 2, 1)) / np.sqrt(dims)
+        concat_captions_att = []
+        for i in range(Nt): concat_captions_att.append(captions_att[:, i, i].unsqueeze(-1))
+        concat_captions_att = torch.cat(concat_captions_att, -1)
+        combined_att = torch.cat([attn, concat_captions_att.unsqueeze(-1)], -1)
 
-        # visual_caption = torch.matmul(keys, relative_geometry_weights.permute(0, 2, 1)) / np.sqrt(dims // 8)
-        # concatenated_visual_caption = []
-        # for i in range(num_tokens): concatenated_visual_caption.append(visual_caption[:, i, i].unsqueeze(-1))
-        # concatenated_visual_caption = torch.cat(concatenated_visual_caption, -1)
+        combined_values = []
+        for i in range(Nt): combined_values.append(torch.cat([values, cut_caption_features[:, i, :].unsqueeze(1)], 1))
 
-        # combined_attn = torch.cat([attn, concatenated_visual_caption.unsqueeze(1)], 1) # (bs, nq+1, nk)
-        combined_v = [torch.cat([values, relative_geometry_weights[:, :, i, :].unsqueeze(2)], 2) for i in range(nq)]
+        combined_atts = []
+        for i in range(Nt): combined_atts.append(torch.softmax(combined_att[:, i, :].unsqueeze(1), -1))
+
+        outs = []
+        for i in range(Nt): outs.append(torch.matmul(combined_atts[i], combined_values[i]))
+
+        outs = torch.cat(outs, 1)
+        
+        return output, attn
+
+    else:
     
-    attn = softmax(attn, dim=-1)
+        attn = softmax(attn, dim=-1)
 
-    if dropout_p > 0.0:
-        attn = dropout(attn, p=dropout_p)
-    # (B, Nt, Ns) x (B, Ns, E) -> (B, Nt, E)
-    output = torch.bmm(attn, values)
-    return output, attn
+        if dropout_p > 0.0:
+            attn = dropout(attn, p=dropout_p)
+        # (B, Nt, Ns) x (B, Ns, E) -> (B, Nt, E)
+        output = torch.bmm(attn, values)
+        return output, attn
 
 
 def _mha_shape_check(query: Tensor, key: Tensor, value: Tensor,
