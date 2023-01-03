@@ -263,8 +263,8 @@ def _scaled_dot_product_attention(
         for i in range(Nt): outs.append(torch.matmul(combined_atts[i], combined_values[i]))
 
         outs = torch.cat(outs, 1)
-        
-        return output, attn
+
+        return outs, attn
 
     else:
     
