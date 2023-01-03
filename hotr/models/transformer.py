@@ -412,6 +412,7 @@ class TransformerDecoderLayer(nn.Module):
                      pos: Optional[Tensor] = None,
                      query_pos: Optional[Tensor] = None):
 
+        import pdb; pdb.set_trace();
         q = k = self.with_pos_embed(tgt, query_pos)
         tgt2 = self.self_attn(q, k, value=tgt, attn_mask=tgt_mask,
                               key_padding_mask=tgt_key_padding_mask)[0]
@@ -439,6 +440,7 @@ class TransformerDecoderLayer(nn.Module):
                     pos: Optional[Tensor] = None,
                     query_pos: Optional[Tensor] = None):
         
+        import pdb; pdb.set_trace();
         tgt2 = self.norm1(tgt)
         q = k = self.with_pos_embed(tgt2, query_pos)
         tgt2 = self.self_attn(q, k, value=tgt2, attn_mask=tgt_mask,
