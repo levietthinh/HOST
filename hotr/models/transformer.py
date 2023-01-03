@@ -62,7 +62,6 @@ class Transformer(nn.Module):
 
         tgt = torch.zeros_like(query_embed)
         memory = self.encoder(src, src_key_padding_mask=mask, src_key_padding_semantic_mask = semantic_masks, pos=pos_embed, att_coords=att_coords, semantic_features=semantic_features, caption_features=caption_features, caption_masks=caption_masks)
-        import pdb; pdb.set_trace()
         hs = self.decoder(tgt, memory, memory_key_padding_mask=mask, pos=pos_embed, query_pos=query_embed, caption_features=caption_features)
   
         return hs.transpose(1, 2), memory.permute(1, 2, 0).view(bs, c, h, w)
@@ -413,7 +412,8 @@ class TransformerDecoderLayer(nn.Module):
                      query_pos: Optional[Tensor] = None,
                      caption_features: Optional[Tensor] = None):
 
-        import pdb; pdb.set_trace();
+        if caption_features is not None:
+            import pdb; pdb.set_trace();
         q = k = self.with_pos_embed(tgt, query_pos)
         
         tgt2 = self.self_attn(q, k, value=tgt, attn_mask=tgt_mask,
