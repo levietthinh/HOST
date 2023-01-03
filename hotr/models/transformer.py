@@ -62,6 +62,7 @@ class Transformer(nn.Module):
 
         tgt = torch.zeros_like(query_embed)
         memory = self.encoder(src, src_key_padding_mask=mask, src_key_padding_semantic_mask = semantic_masks, pos=pos_embed, att_coords=att_coords, semantic_features=semantic_features, caption_features=caption_features, caption_masks=caption_masks)
+        import pdb; pdb.set_trace()
         hs = self.decoder(tgt, memory, memory_key_padding_mask=mask, pos=pos_embed, query_pos=query_embed, caption_features=caption_features)
   
         return hs.transpose(1, 2), memory.permute(1, 2, 0).view(bs, c, h, w)
@@ -151,7 +152,6 @@ class TransformerDecoder(nn.Module):
 
         intermediate = []
         
-        import pdb; pdb.set_trace()
         for layer in self.layers:
             output = layer(output, memory, tgt_mask=tgt_mask,
                            memory_mask=memory_mask,
