@@ -72,8 +72,8 @@ class HOTR(nn.Module):
         self.tau = temperature
         self.hoi_aux_loss = hoi_aux_loss
         # ----------------------------------
-        self.semantic_features_path = '/home/nguyenvd_drone/Thinh/HOTR/v-coco/semanticFeatures'
-        self.caption_feature_path = '/home/nguyenvd_drone/Thinh/HOTR/v-coco/captions_npy'
+        self.semantic_features_path = '/vcoco/v-coco/semanticFeatures'
+        self.caption_feature_path = '/vcoco/v-coco/captions_npy'
 
     def forward(self, samples: NestedTensor, image_ids: list):
         if isinstance(samples, (list, torch.Tensor)):
