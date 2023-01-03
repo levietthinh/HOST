@@ -226,29 +226,27 @@ def _scaled_dot_product_attention(
         - Output: attention values have shape :math:`(B, Nt, E)`; attention weights
             have shape :math:`(B, Nt, Ns)`
     """
-    B, Nt, E = q.shape
-    q = q / math.sqrt(E)
+
+    queries, keys, values = q, k ,v
+
+    B, Nt, E = queries.shape
+    queries = queries / math.sqrt(E)
     # (B, Nt, E) x (B, E, Ns) -> (B, Nt, Ns)
     
     if attn_mask is not None:
-        attn = torch.baddbmm(attn_mask, q, k.transpose(-2, -1))
+        attn = torch.baddbmm(attn_mask, queries, keys.transpose(-2, -1))
     else:
-        attn = torch.bmm(q, k.transpose(-2, -1))
+        attn = torch.bmm(queries, keys.transpose(-2, -1))
 
     if relative_geometry_weights is not None:
         import pdb; pdb.set_trace()
-    #   w_g = relative_geometry_weights
-    #   w_g = F.interpolate(w_g, size=(attn.size(-1), attn.size(-2)), mode='bilinear')
-    #   w_g = w_g.reshape(B, *w_g.size()[-2:])
-    #   w_a = attn
-    #   attn = torch.log(torch.clamp(w_g, min=1e-6)) + w_a
     
     attn = softmax(attn, dim=-1)
 
     if dropout_p > 0.0:
         attn = dropout(attn, p=dropout_p)
     # (B, Nt, Ns) x (B, Ns, E) -> (B, Nt, E)
-    output = torch.bmm(attn, v)
+    output = torch.bmm(attn, values)
     return output, attn
 
 
