@@ -196,6 +196,7 @@ def softmax(input: Tensor, dim: Optional[int] = None, _stacklevel: int = 3, dtyp
         ret = input.softmax(dim, dtype=dtype)
     return ret
 
+import numpy as np
 def _scaled_dot_product_attention(
     q: Tensor,
     k: Tensor,
@@ -239,7 +240,21 @@ def _scaled_dot_product_attention(
         attn = torch.bmm(queries, keys.transpose(-2, -1))
 
     if relative_geometry_weights is not None:
+        caption_features = relative_geometry_weights
+        num_tokens, bs, dims = caption_features.shape
+        caption_features = caption_features.view(num_tokens, bs, 8, dims // 8) # (Nt, bs, nh, dim)
+        caption_features = caption_features.permute(1, 2, 0, -1)
+        caption_features = caption_features.reshape(-1, num_tokens, dims // 8)
+
         import pdb; pdb.set_trace()
+
+        # visual_caption = torch.matmul(keys, relative_geometry_weights.permute(0, 2, 1)) / np.sqrt(dims // 8)
+        # concatenated_visual_caption = []
+        # for i in range(num_tokens): concatenated_visual_caption.append(visual_caption[:, i, i].unsqueeze(-1))
+        # concatenated_visual_caption = torch.cat(concatenated_visual_caption, -1)
+
+        # combined_attn = torch.cat([attn, concatenated_visual_caption.unsqueeze(1)], 1) # (bs, nq+1, nk)
+        combined_v = [torch.cat([values, relative_geometry_weights[:, :, i, :].unsqueeze(2)], 2) for i in range(nq)]
     
     attn = softmax(attn, dim=-1)
 

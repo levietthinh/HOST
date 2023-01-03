@@ -114,13 +114,13 @@ class TransformerEncoder(nn.Module):
                     if self.norm is not None:
                         output = self.norm(output)
 
-            import pdb; pdb.set_trace()
             relation_caption_output = self.captionlayer(caption_features, output, output, src_key_padding_mask=caption_masks, pos=pos)
             output = output + x1 + x2 + relation_caption_output
             
             return output
         
         else:
+
           for layer in self.layers:
               output = layer(output, src_mask=mask,
                            src_key_padding_mask=src_key_padding_mask, pos=pos)
@@ -149,7 +149,6 @@ class TransformerDecoder(nn.Module):
                 caption_features: Optional[Tensor] = None):
         
         output = tgt
-
         intermediate = []
         
         for idx, layer in enumerate(self.layers):
