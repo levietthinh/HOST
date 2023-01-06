@@ -76,6 +76,7 @@ class TransformerEncoder(nn.Module):
         self.norm = norm
         self.Lf = 3
         self.self_attn_1 = MultiheadAttention(256, 8, 0.1)
+        self.self_attn_2 = MultiheadAttention(256, 8, 0.1)
         self.norm2 = nn.LayerNorm(256)
         self.dropout1 = nn.Dropout(0.1)
         self.linear1 = nn.Linear(256, 2048)
@@ -99,7 +100,7 @@ class TransformerEncoder(nn.Module):
             src_key_padding_semantic_mask = src_key_padding_semantic_mask[:, :max_tokens]
             caption_features = caption_features[:max_tokens, :, :]
             caption_masks = caption_masks[:, :max_tokens]
-
+            outputs = []
             for i, layer in enumerate(self.layers):
                     if i < self.Lf:
                         output = layer(output, src_mask=mask, src_key_padding_mask=src_key_padding_mask, pos=pos)
@@ -113,7 +114,14 @@ class TransformerEncoder(nn.Module):
                         output = layer(output, src_mask=mask, src_key_padding_mask=src_key_padding_mask, pos=pos)
                     if self.norm is not None:
                         output = self.norm(output)
-
+                    outputs.append(output)
+            output1,output2,output3=outputs[:-3]
+            output2=0.7*output2+0.3*self.self_attn1(output2,output1,value=output1)[0]
+            if self.norm is not None:
+               output2 = self.norm(output2)
+            output=0.7*output3+0.3*self.self_attn2(output3,output2,value=output2)[0]
+            if self.norm is not None:
+               output = self.norm(output)
             relation_caption_output = self.captionlayer(caption_features, output, output, src_key_padding_mask=caption_masks, pos=pos)
             output = output + x1 + x2 + relation_caption_output
             
